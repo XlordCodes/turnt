@@ -46,7 +46,7 @@ export default function About() {
             Culture. Chaos. Community.
           </motion.p>
 
-          <motion.h2 {...spring(0.1)} className="leading-[0.85] tracking-tight mb-8" style={{
+          <motion.h2 {...spring(0.1)} className="leading-[1.1] tracking-wide mb-8" style={{
             fontFamily: "'Jorgey', sans-serif",
             fontSize: 'clamp(48px, 10vw, 120px)',
             background: 'linear-gradient(160deg, #FFF7ED 20%, #FFC46B 60%, #F26A0A 100%)',
@@ -79,7 +79,7 @@ export default function About() {
             How it started
           </motion.p>
 
-          <motion.h2 {...spring(0.1)} className="leading-[0.85] tracking-tight mb-8" style={{
+          <motion.h2 {...spring(0.1)} className="leading-[1.1] tracking-wide mb-8" style={{
             fontFamily: "'Jorgey', sans-serif",
             fontSize: 'clamp(36px, 7vw, 72px)',
             background: 'linear-gradient(135deg, #F26A0A, #FFC46B)',
@@ -101,7 +101,7 @@ export default function About() {
 
         {/* ── What We Stand For ── */}
         <div className="mb-24 md:mb-32">
-          <motion.h2 {...spring(0)} className="leading-[0.85] tracking-tight mb-12" style={{
+          <motion.h2 {...spring(0)} className="leading-[1.1] tracking-wide mb-12" style={{
             fontFamily: "'Jorgey', sans-serif",
             fontSize: 'clamp(40px, 8vw, 80px)',
           }}>

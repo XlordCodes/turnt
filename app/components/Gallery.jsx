@@ -83,7 +83,7 @@ export default function Gallery() {
             Gallery
           </span>
         </div>
-        <h2 className="leading-[0.85] tracking-tight" style={{
+        <h2 className="leading-[1.1] tracking-wide" style={{
           fontFamily: "'Jorgey', sans-serif",
           fontSize: 'clamp(40px, 8vw, 80px)',
           color: '#FFF7ED',
