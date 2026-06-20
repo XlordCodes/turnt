@@ -18,15 +18,36 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [user, setUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user: currentUser } }) => {
+    supabase.auth.getUser().then(async ({ data: { user: currentUser } }) => {
       setUser(currentUser)
+      if (currentUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', currentUser.id)
+          .single()
+        setIsAdmin(profile?.role === 'admin')
+      } else {
+        setIsAdmin(false)
+      }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(profile?.role === 'admin')
+      } else {
+        setIsAdmin(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -109,7 +130,7 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                {/* Desktop: My RSVPs + Logout */}
+                {/* Desktop: My RSVPs + Profile + Logout */}
                 <button
                   className="hidden sm:flex items-center gap-1.5 px-4 py-2 text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-200 cursor-pointer"
                   style={{
@@ -132,6 +153,46 @@ export default function Navbar() {
                   </svg>
                   My RSVPs
                 </button>
+                <Link
+                  href="/profile"
+                  className="hidden sm:flex items-center px-4 py-2 text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-200 cursor-pointer"
+                  style={{
+                    border: '1px solid rgba(242,106,10,0.3)',
+                    color: '#F26A0A',
+                    background: 'transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(242,106,10,0.08)'
+                    e.currentTarget.style.borderColor = 'rgba(242,106,10,0.5)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.borderColor = 'rgba(242,106,10,0.3)'
+                  }}
+                >
+                  Profile
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="hidden sm:flex items-center px-4 py-2 text-xs font-black tracking-widest uppercase rounded-full transition-all duration-200 cursor-pointer"
+                    style={{
+                      border: '1px solid rgba(239,68,68,0.4)',
+                      color: '#EF4444',
+                      background: 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239,68,68,0.1)'
+                      e.currentTarget.style.borderColor = 'rgba(239,68,68,0.6)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                      e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'
+                    }}
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
                 <button
                   className="hidden sm:flex items-center px-4 py-2 text-xs font-bold tracking-widest uppercase rounded-full transition-all duration-200 cursor-pointer"
                   style={{
@@ -248,6 +309,24 @@ export default function Navbar() {
                   </svg>
                   My RSVPs
                 </button>
+                <Link
+                  href="/profile"
+                  onClick={close}
+                  className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold tracking-widest uppercase rounded-xl transition-all duration-200 cursor-pointer"
+                  style={{ border: '1px solid rgba(242,106,10,0.3)', color: '#F26A0A' }}
+                >
+                  Profile
+                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={close}
+                    className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-black tracking-widest uppercase rounded-xl transition-all duration-200 cursor-pointer"
+                    style={{ border: '1px solid rgba(239,68,68,0.4)', color: '#EF4444' }}
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold tracking-widest uppercase rounded-xl transition-all duration-200 cursor-pointer"

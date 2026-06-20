@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from "@/lib/supabaseClient";
 
@@ -236,19 +237,13 @@ function FeaturedDropCard({ event, user, interests, onInterested }) {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <button
+          <Link
+            href={`/events/${event.dbId || event.id}`}
             className="group flex-1 flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl text-sm font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
             style={{
               background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
               color: '#fff',
               boxShadow: `0 8px 32px ${accent}33`,
-            }}
-            onClick={() => {
-              if (event.regLink) {
-                window.open(event.regLink, '_blank', 'noopener,noreferrer');
-              } else {
-                router.push('/eventbooking?eventId=' + event.id);
-              }
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-3px)'
@@ -262,7 +257,7 @@ function FeaturedDropCard({ event, user, interests, onInterested }) {
             <SparkleIcon />
             Register Now
             <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-          </button>
+          </Link>
 
           <button
             onClick={handleInterested}

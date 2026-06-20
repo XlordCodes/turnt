@@ -129,6 +129,7 @@ export default function AuthForm() {
       }
 
       if (data.user) {
+        router.refresh()
         router.push(returnTo)
       }
     } catch {
@@ -209,7 +210,7 @@ export default function AuthForm() {
           setServerError('An account with this email already exists.')
           return
         }
-
+        router.refresh()
         router.push(returnTo)
       }
     } catch (err) {

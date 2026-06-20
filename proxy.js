@@ -1,10 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
-export async function middleware(req) {
-  let supabaseResponse = NextResponse.next({
-    request: req,
-  })
+export async function proxy(req) {
+  let supabaseResponse = NextResponse.next({ request: req })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -15,10 +13,8 @@ export async function middleware(req) {
           return req.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request: req,
-          })
+          cookiesToSet.forEach(({ name, value, options }) => req.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request: req })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -27,9 +23,13 @@ export async function middleware(req) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
 
-  if (req.nextUrl.pathname.startsWith('/admin') && !user) {
+  if (req.nextUrl.pathname.startsWith('/admin') && !session) {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+
+  if (req.nextUrl.pathname.startsWith('/profile') && !session) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
@@ -37,5 +37,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/profile/:path*'],
 }
