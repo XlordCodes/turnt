@@ -17,8 +17,8 @@ export default function Feedback() {
         transition={{ duration: 0.7 }}
       >
         <span className="white">SHARE YOUR </span>
-        <span className="orange">EXPERIE</span>
-        <span className="white">NCE</span>
+        <span className="orange pr-2 md:pr-4 inline-block">EXPERIE</span>
+        <span className="white pr-2 md:pr-4 inline-block">NCE</span>
       </motion.h2>
 
       <motion.p

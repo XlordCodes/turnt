@@ -149,7 +149,7 @@ const SectionHeader = ({ inView }) => (
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay: 0.2 }}>
       Captured in<br />
-      <span className="reels-heading-gradient">Motion</span>
+      <span className="reels-heading-gradient pr-2 md:pr-4 inline-block">Motion</span>
     </motion.h2>
 
     <motion.p className="reels-subheading"

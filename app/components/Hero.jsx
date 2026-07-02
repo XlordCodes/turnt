@@ -65,7 +65,7 @@ export default function Hero() {
             <div className="overflow-hidden">
               <motion.h1
                 {...spring(0.2)}
-                className="leading-[0.85] tracking-tight"
+                className="leading-[0.85] tracking-tight pr-2 md:pr-4 inline-block"
                 style={{
                   fontFamily: "'Jorgey', sans-serif",
                   fontSize: 'clamp(64px, 12vw, 160px)',

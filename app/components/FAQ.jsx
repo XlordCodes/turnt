@@ -25,7 +25,7 @@ export default function FAQ() {
           transition={{ duration: 0.7 }}
         >
           <span className="white">COMMON </span>
-          <span className="orange">QUESTIONS</span>
+          <span className="orange pr-2 md:pr-4 inline-block">QUESTIONS</span>
         </motion.h2>
         <p className="faq-subtitle">Everything you need to know about joining Chennai&apos;s most vibey community.</p>
       </div>

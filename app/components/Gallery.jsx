@@ -77,7 +77,7 @@ export default function Gallery() {
           fontSize: 'clamp(40px, 8vw, 80px)',
           color: '#FFF7ED',
         }}>
-          THE <span style={{
+          THE <span className="pr-2 md:pr-4 inline-block" style={{
             background: 'linear-gradient(135deg, #F26A0A, #FFC46B)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',

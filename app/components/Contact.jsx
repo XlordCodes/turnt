@@ -38,7 +38,7 @@ export default function Contact() {
           color: '#FFF7ED',
         }}>
           DON&apos;T BE A<br />
-          <span style={{
+          <span className="pr-2 md:pr-4 inline-block" style={{
             background: 'linear-gradient(135deg, #F26A0A, #FFC46B)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
