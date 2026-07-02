@@ -8,7 +8,7 @@ export default function Feedback() {
   const [hover, setHover] = useState(0)
 
   return (
-    <section className="feedback" id="feedback-form">
+    <section className="feedback px-4 md:px-8 overflow-hidden" id="feedback-form">
       <motion.h2
         className="feedback-title"
         initial={{ opacity: 0, y: 30 }}

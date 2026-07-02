@@ -11,12 +11,11 @@ const VALID_OFFERS = {
   FIRST50: { discount: 0.50, maxPerUser: 1, maxTotal: 50 },
 }
 
-const razorpay = new Razorpay({
-  key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-})
-
 export async function POST(req) {
+  const razorpay = new Razorpay({
+    key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  })
   if (!req.headers.get('content-type')?.includes('application/json')) {
     return NextResponse.json({ error: 'Invalid Content-Type' }, { status: 415 })
   }

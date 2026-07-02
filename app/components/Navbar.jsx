@@ -400,9 +400,6 @@ export default function Navbar() {
                 </div>
             </header>
 
-            {/* Spacer */}
-            <div className="h-20" />
-
             {/* Sidebar */}
             <MyEventsSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         </>

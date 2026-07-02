@@ -44,7 +44,7 @@ export default function Hero() {
       </div>
 
       {/* ── Main Content: Asymmetric Grid ── */}
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-6 md:px-12 py-20 md:py-0">
+      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12 pt-28 pb-20 md:pt-0 md:pb-0">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center">
 
           {/* ── Left Column: Typography ── */}
