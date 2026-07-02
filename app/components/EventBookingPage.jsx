@@ -609,7 +609,7 @@ function PaymentPage({ event, formData, onSuccess, onBack, visible }) {
     }
 
     const options = {
-      key: 'rzp_test_1DP5mmOlF5G5ag',
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       amount: finalAmount,
       currency: 'INR',
       name: event.organizer,
