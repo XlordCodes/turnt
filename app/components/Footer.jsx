@@ -146,11 +146,8 @@ export default function Footer() {
 
                     {/* Massive Bottom Text */}
                     <h1
-                        className="w-full text-center leading-[0.75] tracking-tighter select-none text-[#050505] pointer-events-none"
-                        style={{
-                            fontFamily: "'Jorgey', sans-serif",
-                            fontSize: 'clamp(80px, 20vw, 350px)',
-                        }}
+                        className="w-full text-center leading-[0.75] tracking-tighter select-none text-[#050505] pointer-events-none pb-[10px]"
+                        style={{ fontFamily: "'Jorgey', sans-serif", fontSize: "clamp(80px, 20vw, 350px)" }}
                     >
                         TURNT
                     </h1>
