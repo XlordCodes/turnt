@@ -62,10 +62,10 @@ export default function Hero() {
             </motion.div>
 
             {/* Giant Title */}
-            <div className="overflow-hidden">
+            <div className="overflow-hidden pr-4 -mr-4">
               <motion.h1
                 {...spring(0.2)}
-                className="leading-[0.85] tracking-tight pr-2 md:pr-4 inline-block"
+                className="leading-[0.85] tracking-tight inline-block"
                 style={{
                   fontFamily: "'Jorgey', sans-serif",
                   fontSize: 'clamp(64px, 12vw, 160px)',
@@ -74,6 +74,7 @@ export default function Hero() {
               >
                 TUR
                 <span
+                  className="pr-4 md:pr-6 inline-block"
                   style={{
                     background: 'linear-gradient(135deg, #F26A0A 0%, #FFC46B 50%, #FF8B14 100%)',
                     WebkitBackgroundClip: 'text',
