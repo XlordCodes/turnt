@@ -2,50 +2,69 @@
 
 ## Project Overview
 
-Next.js 16 (App Router) platform for "Turnt" — a Chennai-based Gen-Z hangout community focused on high-energy IRL meetups, chill/wild events, and bucket-list activities. Single-page app currently, expanding into a full-stack platform with user authentication and event management. React 19, TypeScript configured but components are `.jsx`, pages are `.js`.
-
-## Core Brand Identity (Crucial for Copywriting & UI)
-
-- **Vibe:** High energy, good vibes, no boring scenes.
-- **Audience:** Gen-Z individuals in Chennai who actually want to show up IRL, not just text.
+Next.js 16 (App Router) for "Turnt" — Chennai Gen-Z IRL hangout community. Single-page app expanding into full-stack with auth + event management. React 19, TypeScript configured but components are `.jsx`, pages are `.js`.
 
 ## Commands
 
 - `npm run dev` — dev server on localhost:3000
 - `npm run build` — production build
-- `npm run lint` — ESLint (next/core-web-vitals + typescript presets)
+- `npm run lint` — ESLint (next/core-web-vitals + typescript presets); no path arg, runs on entire project
 - No test suite exists
+- No `npm run typecheck` — use `npx tsc --noEmit` if needed
 
-## File Conventions & Refactoring Rules
+## File Conventions
 
-- Components: `app/components/*.jsx` (not `.tsx`)
-- Pages: `app/page.js`, `app/eventbooking/page.js` (plain `.js`)
+- Components: `app/components/*.jsx` (not `.tsx`); all are `'use client'` except `app/page.js`
+- Pages: `app/page.js`, `app/login/page.js`, `app/eventbooking/page.js`, `app/admin/page.js` (plain `.js`)
+- Admin page is a **Server Component** (auth check + role check on server, renders `AdminUI.jsx` client component)
+- CSS: `app/styles/*.css` — being phased out for Tailwind v4 utility classes
 - Path alias: `@/*` maps to project root
-- **Refactoring Mandate:** Break down large files. For example, `EventBookingPage.jsx` (currently ~1065 lines) must be modularized into smaller sub-components (e.g., `EventDetails.jsx`, `PaymentStep.jsx`, `TicketView.jsx`) housed in a dedicated `features/eventbooking/` or `components/eventbooking/` directory. Do not shorten program files for brevity when generating code.
+- **Do not shorten program files for brevity when generating code**
 
 ## Styling & Animations
 
 - `app/layout.js` loads fonts via `<link>` tags (Google Fonts + cdnfonts) — not `next/font`
-- **Tailwind Mandate:** Transition entirely to Tailwind CSS v4 utility classes. You are permitted to integrate external drop-in Tailwind components. Phase out plain CSS files where possible to ensure UI consistency.
+- Tailwind CSS v4 via `@tailwindcss/postcss` plugin. Transition all components to Tailwind utilities, phase out plain CSS files
 - Animations: framer-motion in Hero, custom requestAnimationFrame in Navbar
 
-## Backend & Feature Architecture (Supabase)
+## Backend (Supabase)
 
-- **Database/Auth Provider:** Supabase. Read migration files for context.
-- **Authentication:**
-  - Phase 1: Email + Password (No magic links).
-  - Phase 2: Google OAuth.
-  - Required User Fields: Full Name, Username, WhatsApp Number (Mandatory), Instagram Handle (Optional).
-- **Event Flow:**
-  - Events display: Name, Description, Registration Link (Razorpay), Date & Time, Venue, Ticket Price.
-  - "Interested" Feature: Acts as a bookmark for users. Admins can view a list/count of interested users. Status remains as "Interested" even after booking.
-- Razorpay test key is hardcoded for demo — production requires backend order creation.
+- Client: `lib/supabaseClient.js` exports a single `supabase` instance
+- Server (admin page only): `createServerClient` from `@supabase/ssr` with `SUPABASE_SERVICE_ROLE_KEY`
+- Middleware: `middleware.js` (plain `.js`) protects `/admin` routes — requires auth, redirects to `/login`
+- Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- `.env*` files are gitignored. No `.env.example` exists yet — create one when adding new backend services
+- Migration: `001_init_migration.sql` at project root (not in a `supabase/migrations/` folder)
+- Supabase RPC: `add_event_interest(p_event_id)` used in UpcomingEvents for server-side user_id insertion
+- Tables: `profiles` (RLS enabled), `events` (RLS enabled), `event_interests` (RLS enabled)
+
+## Auth Flow
+
+- Phase 1: Email + Password only (no magic links)
+- Phase 2: Google OAuth (planned)
+- Required profile fields: Full Name, Username, WhatsApp Number (mandatory), Instagram Handle (optional)
+- Middleware redirects unauthenticated users from `/admin` to `/login`
+- Admin role check happens server-side in `app/admin/page.js` via `profiles.role`
+
+## Events & Payments
+
+- Events: Name, Description, Reg Link (Razorpay), Date/Time, Venue, Ticket Price
+- "Interested" feature: bookmarks events; status stays "Interested" even after booking
+- Razorpay test key hardcoded in `EventBookingPage.jsx` line 612 — production requires backend order creation
+- No API routes exist yet (`app/api/` does not exist)
+
+## Security Notes (see AUDIT.md for full report)
+
+- Admin route is server-protected (middleware + Server Component role check)
+- `profiles` UPDATE policy lacks `WITH CHECK` — users can self-promote to admin (CRITICAL, unfixed)
+- `events` INSERT/UPDATE/DELETE have no admin-only RLS policies (CRITICAL, unfixed)
+- `select('*')` on events exposes `reg_link` in client — use explicit column lists
+- `.env.local` is gitignored but verify it was never force-committed
 
 ## Gotchas
 
-- `npm run lint` does not pass a path — runs on entire project
-- No `npm run typecheck` script — use `npx tsc --noEmit` if needed
-- Remote images allowed only from `images.unsplash.com` and `images.pexels.com` (configured in `next.config.ts`)
-- `.env*` files are gitignored. Always provide template environment variables in a `.env.example` file when adding new backend services.
-
-Whenever you take an action or learn new information that alters the team's workflow, capabilities, or setup, you must immediately update this [AGENTS.md] file to reflect the changes.
+- Remote images allowed only from `images.unsplash.com` and `images.pexels.com` (in `next.config.ts`)
+- ESLint config uses flat config format (`eslint.config.mjs`)
+- tsconfig has `strict: true` and `noEmit: true`
+- `package-lock.json` is gitignored — run `npm install` to regenerate if needed
+- `ui-ux-pro-max/` directory is gitignored — do not reference or create files there

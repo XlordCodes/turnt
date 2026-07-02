@@ -129,6 +129,7 @@ export default function AuthForm() {
       }
 
       if (data.user) {
+        router.refresh()
         router.push(returnTo)
       }
     } catch {
@@ -200,7 +201,6 @@ export default function AuthForm() {
           })
 
         if (profileError) {
-          console.error('Profile insert failed:', profileError.message, profileError.details)
           setServerError('Account created but profile setup failed. Please contact support.')
           return
         }
@@ -209,11 +209,10 @@ export default function AuthForm() {
           setServerError('An account with this email already exists.')
           return
         }
-
+        router.refresh()
         router.push(returnTo)
       }
-    } catch (err) {
-      console.error('Signup error:', err)
+    } catch {
       setServerError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)

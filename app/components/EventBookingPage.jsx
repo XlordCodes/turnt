@@ -50,6 +50,52 @@ const DEFAULT_EVENT = {
   ],
 };
 
+const ACCENTS = ['#FF6B00', '#E85D04', '#FF9500', '#F26A0A', '#FF8B14', '#FFC46B'];
+
+function mapDbEventToUI(dbEvent) {
+  const dt = new Date(dbEvent.date_time);
+  const dateStr = dt.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  const timeStr = dt.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const ticketPrice = Number(dbEvent.ticket_price) || 0;
+
+  return {
+    id: dbEvent.id,
+    week: 'NEXT UP',
+    name: dbEvent.name,
+    subtitle: 'good vibes only',
+    date: dateStr,
+    time: timeStr,
+    location: dbEvent.venue.split(',')[0].trim(),
+    locationFull: dbEvent.venue,
+    status: 'open',
+    statusLabel: 'Registration Open',
+    tag: ticketPrice === 0 ? 'FREE · OPEN TO ALL' : 'OPEN TO ALL',
+    about: dbEvent.description,
+    accent: ACCENTS[0],
+    posterLabel: dbEvent.name.toUpperCase().replace(' ', '\n'),
+    bgWord: 'TURNT',
+    image: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1200&auto=format&fit=crop&q=80',
+    fee: ticketPrice === 0 ? 'Free' : `₹${ticketPrice.toLocaleString('en-IN')}`,
+    feeAmount: ticketPrice * 100,
+    category: 'Community Hangout',
+    organizer: 'Turnt Community',
+    agenda: [
+      { time: '5:00 AM', title: 'Assembly & Vibe Check' },
+      { time: '5:30 AM', title: 'Beach Games & Icebreakers' },
+      { time: '6:30 AM', title: 'Sunset Chill & Photos' },
+    ],
+    highlights: [
+      'Chill evening by ' + dbEvent.venue.split(',')[0].trim(),
+      'Beach games and icebreakers',
+      'Sunset views and group photos',
+      'Snacks and good conversations',
+      'Open to everyone — come solo or with friends',
+    ],
+    regLink: dbEvent.reg_link,
+    dbId: dbEvent.id,
+  };
+}
+
 /* ─── Offer definitions ─────────────────────────────────────── */
 const OFFERS = [
   {
@@ -201,10 +247,6 @@ const INITIAL_FORM = {
   fullName: '', email: '', phone: '', institution: '',
   department: '', yearOfStudy: '', eventSelection: '', notes: '',
 };
-
-function generateBookingId() {
-  return 'TRNT-' + Math.random().toString(36).toUpperCase().slice(2, 8);
-}
 
 /* ═══════════════════════════════════════════════════════════
    OffersStrip  — shown above payment card
@@ -590,66 +632,107 @@ function PaymentPage({ event, formData, onSuccess, onBack, visible }) {
     setRzError('');
     setPaying(true);
 
-    if (baseAmount === 0) {
-      setPaying(false);
-      onSuccess({
-        ...formData,
-        bookingId: generateBookingId(),
-        amountPaid: 'Free',
-        offerUsed: null,
+    try {
+      const res = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: event.id,
+          offerCode: selectedOffer?.id || null,
+        }),
       });
-      return;
-    }
 
-    const loaded = await loadRazorpay();
-    if (!loaded) {
-      setRzError('Could not load Razorpay. Check your internet connection and try again.');
-      setPaying(false);
-      return;
-    }
+      const orderData = await res.json();
 
-    const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: finalAmount,
-      currency: 'INR',
-      name: event.organizer,
-      description: `${event.name} — General Admission`,
-      image: event.image,
+      if (!res.ok) {
+        setRzError(orderData.error || 'Failed to create order. Please try again.');
+        setPaying(false);
+        return;
+      }
 
-      prefill: {
-        name: formData.fullName,
-        email: formData.email,
-        contact: formData.phone,
-      },
-
-      notes: {
-        event_id: event.id,
-        institution: formData.institution,
-        offer_code: selectedOffer?.id || 'NONE',
-      },
-
-      theme: {
-        color: event.accent,
-      },
-
-      modal: {
-        ondismiss: () => {
-          setPaying(false);
-        },
-      },
-
-      handler: (response) => {
+      if (!orderData.orderId) {
         setPaying(false);
         onSuccess({
           ...formData,
-          bookingId: response.razorpay_payment_id || generateBookingId(),
-          amountPaid: finalDisplay,
+          bookingId: orderData.bookingId,
+          amountPaid: 'Free',
           offerUsed: selectedOffer?.id || null,
         });
-      },
-    };
+        return;
+      }
 
-    try {
+      const loaded = await loadRazorpay();
+      if (!loaded) {
+        setRzError('Could not load Razorpay. Check your internet connection and try again.');
+        setPaying(false);
+        return;
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: 'INR',
+        name: event.organizer,
+        description: `${event.name} — General Admission`,
+        image: event.image,
+        order_id: orderData.orderId,
+
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+
+        notes: {
+          event_id: event.id,
+          institution: formData.institution,
+          offer_code: selectedOffer?.id || 'NONE',
+        },
+
+        theme: {
+          color: event.accent,
+        },
+
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+          },
+        },
+
+        handler: async (response) => {
+          try {
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok) {
+              setRzError(verifyData.error || 'Payment verification failed. Please contact support.');
+              setPaying(false);
+              return;
+            }
+
+            setPaying(false);
+            onSuccess({
+              ...formData,
+              bookingId: verifyData.bookingId,
+              amountPaid: finalDisplay,
+              offerUsed: selectedOffer?.id || null,
+            });
+          } catch {
+            setRzError('Payment verification failed. Please contact support.');
+            setPaying(false);
+          }
+        },
+      };
+
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', (resp) => {
         setRzError(`Payment failed: ${resp.error.description}`);
@@ -794,6 +877,16 @@ function PaymentPage({ event, formData, onSuccess, onBack, visible }) {
 /* ═══════════════════════════════════════════════════════════
    STEP 3 — SuccessScreen (Ticket)
 ═══════════════════════════════════════════════════════════ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function SuccessScreen({ event, data, onHome }) {
   const [show, setShow] = useState(false);
   const ticketRef = useRef(null);
@@ -806,42 +899,47 @@ function SuccessScreen({ event, data, onHome }) {
   const handleDownload = () => {
     const win = window.open('', '_blank');
     if (!win) return;
+    const e = escapeHtml;
+    const accent = escapeHtml(event.accent);
+    const offerRow = data?.offerUsed
+      ? `<div class="ticket-row"><span>Offer Used</span><span class="fee">${e(data.offerUsed)}</span></div>`
+      : '';
     win.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Turnt Ticket — ${event.name}</title>
+        <title>Turnt Ticket — ${e(event.name)}</title>
         <style>
           body { font-family: system-ui, sans-serif; background: #0d0a09; color: #fff; padding: 2rem; }
-          .ticket { max-width: 480px; margin: auto; border: 1px solid ${event.accent}44;
+          .ticket { max-width: 480px; margin: auto; border: 1px solid ${accent}44;
             border-radius: 16px; overflow: hidden; }
-          .ticket-header { background: ${event.accent}22; padding: 1.5rem; border-bottom: 1px dashed ${event.accent}44; }
-          .ticket-header h2 { margin: 0 0 .25rem; color: ${event.accent}; font-size: 1.5rem; }
+          .ticket-header { background: ${accent}22; padding: 1.5rem; border-bottom: 1px dashed ${accent}44; }
+          .ticket-header h2 { margin: 0 0 .25rem; color: ${accent}; font-size: 1.5rem; }
           .booking-id { font-size: .75rem; color: rgba(255,255,255,.4); letter-spacing: .1em; }
-          .booking-id span { color: ${event.accent}; font-weight: 700; }
+          .booking-id span { color: ${accent}; font-weight: 700; }
           .ticket-body { padding: 1.5rem; }
           .ticket-row { display: flex; justify-content: space-between; padding: .6rem 0;
             border-bottom: 1px solid rgba(255,255,255,.06); font-size: .875rem; }
           .ticket-row span:first-child { color: rgba(255,255,255,.4); }
           .ticket-row span:last-child { font-weight: 600; }
-          .fee { color: ${event.accent} !important; }
+          .fee { color: ${accent} !important; }
           @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
         </style>
       </head>
       <body>
         <div class="ticket">
           <div class="ticket-header">
-            <h2>${event.name}</h2>
-            <div class="booking-id">Booking ID: <span>${data?.bookingId}</span></div>
+            <h2>${e(event.name)}</h2>
+            <div class="booking-id">Booking ID: <span>${e(data?.bookingId)}</span></div>
           </div>
           <div class="ticket-body">
-            <div class="ticket-row"><span>Name</span><span>${data?.fullName}</span></div>
-            <div class="ticket-row"><span>Email</span><span>${data?.email}</span></div>
-            <div class="ticket-row"><span>Date</span><span>${event.date}</span></div>
-            <div class="ticket-row"><span>Venue</span><span>${event.locationFull}</span></div>
-            <div class="ticket-row"><span>Time</span><span>${event.time}</span></div>
-            <div class="ticket-row"><span>Fee Paid</span><span class="fee">${data?.amountPaid || event.fee}</span></div>
-            ${data?.offerUsed ? `<div class="ticket-row"><span>Offer Used</span><span class="fee">${data.offerUsed}</span></div>` : ''}
+            <div class="ticket-row"><span>Name</span><span>${e(data?.fullName)}</span></div>
+            <div class="ticket-row"><span>Email</span><span>${e(data?.email)}</span></div>
+            <div class="ticket-row"><span>Date</span><span>${e(event.date)}</span></div>
+            <div class="ticket-row"><span>Venue</span><span>${e(event.locationFull)}</span></div>
+            <div class="ticket-row"><span>Time</span><span>${e(event.time)}</span></div>
+            <div class="ticket-row"><span>Fee Paid</span><span class="fee">${e(data?.amountPaid || event.fee)}</span></div>
+            ${offerRow}
           </div>
         </div>
         <script>window.onload = () => { window.print(); }<\/script>
@@ -955,10 +1053,10 @@ function SuccessScreen({ event, data, onHome }) {
 /* ═══════════════════════════════════════════════════════════
    Root — EventBookingPage
 ═══════════════════════════════════════════════════════════ */
-export default function EventBookingPage() {
+export default function EventBookingPage({ event: dbEvent }) {
   const router = useRouter();
 
-  const event = DEFAULT_EVENT;
+  const event = dbEvent ? mapDbEventToUI(dbEvent) : DEFAULT_EVENT;
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(null);

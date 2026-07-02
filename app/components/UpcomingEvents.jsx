@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from "@/lib/supabaseClient";
 
@@ -236,19 +237,13 @@ function FeaturedDropCard({ event, user, interests, onInterested }) {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <button
+          <Link
+            href={`/events/${event.dbId || event.id}`}
             className="group flex-1 flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl text-sm font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
             style={{
               background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
               color: '#fff',
               boxShadow: `0 8px 32px ${accent}33`,
-            }}
-            onClick={() => {
-              if (event.regLink) {
-                window.open(event.regLink, '_blank', 'noopener,noreferrer');
-              } else {
-                router.push('/eventbooking?eventId=' + event.id);
-              }
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-3px)'
@@ -262,7 +257,7 @@ function FeaturedDropCard({ event, user, interests, onInterested }) {
             <SparkleIcon />
             Register Now
             <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
-          </button>
+          </Link>
 
           <button
             onClick={handleInterested}
@@ -323,13 +318,17 @@ export default function UpcomingEvents() {
   const pathname = usePathname();
 
   useEffect(() => {
+    let cancelled = false
+
     async function fetchData() {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (cancelled) return;
       setUser(currentUser);
       const { data: dbEvents, error } = await supabase
         .from('events')
-        .select('id, name, description, date_time, venue, reg_link')
+        .select('id, name, description, date_time, venue')
         .order('date_time', { ascending: true });
+      if (cancelled) return;
       if (!error && dbEvents && dbEvents.length > 0) {
         setEvents(dbEvents.map((e, i) => formatDbEvent(e, i)));
       } else {
@@ -338,6 +337,7 @@ export default function UpcomingEvents() {
       setLoading(false);
     }
     fetchData();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -394,7 +394,6 @@ export default function UpcomingEvents() {
           <p style={{ color: 'rgba(255,244,230,0.35)', fontSize: 13, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
             Loading events...
           </p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </section>
     );

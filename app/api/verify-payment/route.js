@@ -1,61 +1,75 @@
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import crypto from 'crypto'
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export async function POST(req) {
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-  if (!keySecret) {
-    console.error('Missing RAZORPAY_KEY_SECRET in environment variables');
-    return NextResponse.json(
-      { error: 'Payment configuration error. Please try again later.' },
-      { status: 500 }
-    );
+  if (!req.headers.get('content-type')?.includes('application/json')) {
+    return NextResponse.json({ error: 'Invalid Content-Type' }, { status: 415 })
   }
 
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+      },
+    }
+  )
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json()
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    return NextResponse.json(
-      { error: 'Missing payment verification parameters' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Missing payment verification parameters' }, { status: 400 })
+  }
+
+  if (!UUID_REGEX.test(razorpay_order_id) && !razorpay_order_id.startsWith('order_')) {
+    return NextResponse.json({ error: 'Invalid order ID format' }, { status: 400 })
+  }
+
+  const razorpaySecret = process.env.RAZORPAY_KEY_SECRET
+  if (!razorpaySecret) {
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
   }
 
   const expectedSignature = crypto
-    .createHmac('sha256', keySecret)
+    .createHmac('sha256', razorpaySecret)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest('hex');
+    .digest('hex')
 
   if (expectedSignature !== razorpay_signature) {
-    console.error('Payment signature verification failed', {
-      orderId: razorpay_order_id,
-    });
-    return NextResponse.json(
-      { error: 'Payment verification failed. Please contact support.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 })
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const { data: booking, error: fetchError } = await supabase
+    .from('bookings')
+    .select('id, user_id, event_id, offer_code, status')
+    .eq('razorpay_order_id', razorpay_order_id)
+    .single()
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error('Missing Supabase credentials for payment verification');
-    return NextResponse.json(
-      { error: 'Server configuration error. Please try again later.' },
-      { status: 500 }
-    );
+  if (fetchError || !booking) {
+    return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  if (booking.user_id !== user.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  }
+
+  if (booking.status === 'confirmed') {
+    return NextResponse.json({ success: true, bookingId: booking.id })
+  }
 
   const { error: updateError } = await supabase
     .from('bookings')
@@ -63,19 +77,27 @@ export async function POST(req) {
       status: 'confirmed',
       razorpay_payment_id: razorpay_payment_id,
     })
-    .eq('razorpay_order_id', razorpay_order_id);
+    .eq('id', booking.id)
 
   if (updateError) {
-    console.error('Supabase update failed after payment verification:', updateError?.message);
-    return NextResponse.json(
-      { error: 'Payment verified but booking update failed. Please contact support.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to confirm booking' }, { status: 500 })
   }
 
-  return NextResponse.json({
-    status: 'verified',
-    orderId: razorpay_order_id,
-    paymentId: razorpay_payment_id,
-  });
+  if (booking.offer_code) {
+    const { count: existingUsage } = await supabase
+      .from('offer_usage')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('offer_code', booking.offer_code)
+
+    if (existingUsage === 0) {
+      await supabase.from('offer_usage').insert({
+        user_id: user.id,
+        offer_code: booking.offer_code,
+        event_id: booking.event_id,
+      })
+    }
+  }
+
+  return NextResponse.json({ success: true, bookingId: booking.id })
 }

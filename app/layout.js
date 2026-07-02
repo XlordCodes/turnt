@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import './styles/App.css'
 import './styles/index.css'
+import Navbar from './components/Navbar'
 
 export const metadata = {
   title: 'Turnt — IRL Hangouts & Good Vibes',
@@ -23,7 +24,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body><Navbar/>{children}</body>
     </html>
   )
 }

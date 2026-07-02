@@ -36,7 +36,7 @@ export default async function AdminDashboard() {
 
   const { data: eventsData } = await supabase
     .from('events')
-    .select('*, event_interests( profiles(full_name, username, whatsapp_number) )')
+    .select('id, name, description, date_time, venue, ticket_price, registration_type, event_interests( profiles(full_name, username) )')
     .order('date_time', { ascending: true })
 
   return <AdminUI eventsData={eventsData || []} />
