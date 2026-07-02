@@ -15,6 +15,8 @@ CREATE TABLE public.bookings (
 -- Set up RLS for bookings
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own bookings." ON public.bookings FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own bookings." ON public.bookings FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own bookings." ON public.bookings FOR UPDATE USING (auth.uid() = user_id);
 
 -- 5. Create Offer Usage Table
 CREATE TABLE public.offer_usage (
@@ -29,3 +31,4 @@ CREATE TABLE public.offer_usage (
 -- Set up RLS for offer_usage
 ALTER TABLE public.offer_usage ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own offer usage." ON public.offer_usage FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own offer usage." ON public.offer_usage FOR INSERT WITH CHECK (auth.uid() = user_id);

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import ProfileForm from './ProfileForm'
 
 export default async function ProfilePage() {
@@ -33,6 +34,19 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#050505] pt-32 px-6 pb-16">
       <div className="max-w-xl mx-auto">
+        {/* ── Back Button ── */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase transition-colors duration-200"
+          style={{ color: 'rgba(255,244,230,0.5)' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back
+        </Link>
+
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-3">
             <div className="h-px w-10" style={{ background: 'linear-gradient(90deg, #F26A0A, transparent)' }} />

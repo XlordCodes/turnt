@@ -9,10 +9,12 @@ export default function MyEventsSidebar({ isOpen, onClose }) {
 
   useEffect(() => {
     if (!isOpen) return
+    let cancelled = false
 
     async function fetchData() {
       setLoading(true)
       const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (cancelled) return
       setUser(currentUser)
 
       if (!currentUser) {
@@ -26,11 +28,13 @@ export default function MyEventsSidebar({ isOpen, onClose }) {
         .select('id, event_id, created_at, events(id, name, date_time, venue)')
         .eq('user_id', currentUser.id)
 
+      if (cancelled) return
       setRsvps(data || [])
       setLoading(false)
     }
 
     fetchData()
+    return () => { cancelled = true }
   }, [isOpen])
 
   useEffect(() => {
@@ -115,7 +119,6 @@ export default function MyEventsSidebar({ isOpen, onClose }) {
                   animation: 'spin 0.8s linear infinite',
                 }}
               />
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
           ) : !user ? (
             <div className="text-center py-16">

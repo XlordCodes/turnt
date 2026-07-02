@@ -1,3 +1,12 @@
+-- Helper: check if current user is admin
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  )
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
 -- 1. Create custom user profiles table extending Supabase Auth
 CREATE TABLE public.profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
@@ -11,9 +20,24 @@ CREATE TABLE public.profiles (
 
 -- Set up Row Level Security (RLS) for profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Users can insert their own profile." ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Users can update own profile." ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Users can view their own profile
+CREATE POLICY "Users can view own profile." ON public.profiles
+  FOR SELECT USING (auth.uid() = id);
+
+-- Admins can view all profiles
+CREATE POLICY "Admins can view all profiles." ON public.profiles
+  FOR SELECT USING (public.is_admin());
+
+-- Users can insert their own profile
+CREATE POLICY "Users can insert their own profile." ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Users can update own profile (non-role fields only)
+CREATE POLICY "Users can update own profile." ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id AND role = 'user');
 
 -- 2. Create Events Table
 CREATE TABLE public.events (
@@ -29,8 +53,18 @@ CREATE TABLE public.events (
 
 -- Set up RLS for events
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Events are viewable by everyone." ON public.events FOR SELECT USING (true);
--- Only admins can create/update/delete events (requires application-level logic to enforce admin role)
+
+CREATE POLICY "Events are viewable by everyone." ON public.events
+  FOR SELECT USING (true);
+
+CREATE POLICY "Admins can insert events." ON public.events
+  FOR INSERT WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins can update events." ON public.events
+  FOR UPDATE USING (public.is_admin());
+
+CREATE POLICY "Admins can delete events." ON public.events
+  FOR DELETE USING (public.is_admin());
 
 -- 3. Create Event Interests Table (RSVPs)
 CREATE TABLE public.event_interests (

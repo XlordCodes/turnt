@@ -13,10 +13,10 @@ export async function proxy(req) {
           return req.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => req.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request: req })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+          cookiesToSet.forEach(({ name, value }) =>
+            supabaseResponse.cookies.set(name, value)
           )
         },
       },
@@ -33,9 +33,13 @@ export async function proxy(req) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
 
+  if (req.nextUrl.pathname.startsWith('/api/admin') && !session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/profile/:path*'],
+  matcher: ['/admin/:path*', '/profile/:path*', '/api/admin/:path*'],
 }

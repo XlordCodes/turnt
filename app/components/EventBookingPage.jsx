@@ -877,6 +877,16 @@ function PaymentPage({ event, formData, onSuccess, onBack, visible }) {
 /* ═══════════════════════════════════════════════════════════
    STEP 3 — SuccessScreen (Ticket)
 ═══════════════════════════════════════════════════════════ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function SuccessScreen({ event, data, onHome }) {
   const [show, setShow] = useState(false);
   const ticketRef = useRef(null);
@@ -889,42 +899,47 @@ function SuccessScreen({ event, data, onHome }) {
   const handleDownload = () => {
     const win = window.open('', '_blank');
     if (!win) return;
+    const e = escapeHtml;
+    const accent = escapeHtml(event.accent);
+    const offerRow = data?.offerUsed
+      ? `<div class="ticket-row"><span>Offer Used</span><span class="fee">${e(data.offerUsed)}</span></div>`
+      : '';
     win.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Turnt Ticket — ${event.name}</title>
+        <title>Turnt Ticket — ${e(event.name)}</title>
         <style>
           body { font-family: system-ui, sans-serif; background: #0d0a09; color: #fff; padding: 2rem; }
-          .ticket { max-width: 480px; margin: auto; border: 1px solid ${event.accent}44;
+          .ticket { max-width: 480px; margin: auto; border: 1px solid ${accent}44;
             border-radius: 16px; overflow: hidden; }
-          .ticket-header { background: ${event.accent}22; padding: 1.5rem; border-bottom: 1px dashed ${event.accent}44; }
-          .ticket-header h2 { margin: 0 0 .25rem; color: ${event.accent}; font-size: 1.5rem; }
+          .ticket-header { background: ${accent}22; padding: 1.5rem; border-bottom: 1px dashed ${accent}44; }
+          .ticket-header h2 { margin: 0 0 .25rem; color: ${accent}; font-size: 1.5rem; }
           .booking-id { font-size: .75rem; color: rgba(255,255,255,.4); letter-spacing: .1em; }
-          .booking-id span { color: ${event.accent}; font-weight: 700; }
+          .booking-id span { color: ${accent}; font-weight: 700; }
           .ticket-body { padding: 1.5rem; }
           .ticket-row { display: flex; justify-content: space-between; padding: .6rem 0;
             border-bottom: 1px solid rgba(255,255,255,.06); font-size: .875rem; }
           .ticket-row span:first-child { color: rgba(255,255,255,.4); }
           .ticket-row span:last-child { font-weight: 600; }
-          .fee { color: ${event.accent} !important; }
+          .fee { color: ${accent} !important; }
           @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
         </style>
       </head>
       <body>
         <div class="ticket">
           <div class="ticket-header">
-            <h2>${event.name}</h2>
-            <div class="booking-id">Booking ID: <span>${data?.bookingId}</span></div>
+            <h2>${e(event.name)}</h2>
+            <div class="booking-id">Booking ID: <span>${e(data?.bookingId)}</span></div>
           </div>
           <div class="ticket-body">
-            <div class="ticket-row"><span>Name</span><span>${data?.fullName}</span></div>
-            <div class="ticket-row"><span>Email</span><span>${data?.email}</span></div>
-            <div class="ticket-row"><span>Date</span><span>${event.date}</span></div>
-            <div class="ticket-row"><span>Venue</span><span>${event.locationFull}</span></div>
-            <div class="ticket-row"><span>Time</span><span>${event.time}</span></div>
-            <div class="ticket-row"><span>Fee Paid</span><span class="fee">${data?.amountPaid || event.fee}</span></div>
-            ${data?.offerUsed ? `<div class="ticket-row"><span>Offer Used</span><span class="fee">${data.offerUsed}</span></div>` : ''}
+            <div class="ticket-row"><span>Name</span><span>${e(data?.fullName)}</span></div>
+            <div class="ticket-row"><span>Email</span><span>${e(data?.email)}</span></div>
+            <div class="ticket-row"><span>Date</span><span>${e(event.date)}</span></div>
+            <div class="ticket-row"><span>Venue</span><span>${e(event.locationFull)}</span></div>
+            <div class="ticket-row"><span>Time</span><span>${e(event.time)}</span></div>
+            <div class="ticket-row"><span>Fee Paid</span><span class="fee">${e(data?.amountPaid || event.fee)}</span></div>
+            ${offerRow}
           </div>
         </div>
         <script>window.onload = () => { window.print(); }<\/script>

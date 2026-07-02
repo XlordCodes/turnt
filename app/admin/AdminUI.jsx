@@ -9,6 +9,7 @@ const INITIAL_FORM = {
   date_time: '',
   venue: '',
   ticket_price: '',
+  registration_type: 'native',
   reg_link: '',
 }
 
@@ -33,6 +34,7 @@ export default function AdminUI({ eventsData = [] }) {
         date_time: local,
         venue: event.venue || '',
         ticket_price: event.ticket_price ?? '',
+        registration_type: event.registration_type || 'native',
         reg_link: event.reg_link || '',
       })
     } else {
@@ -82,7 +84,8 @@ export default function AdminUI({ eventsData = [] }) {
       date_time: new Date(formData.date_time).toISOString(),
       venue: formData.venue,
       ticket_price: Number(formData.ticket_price) || 0,
-      reg_link: formData.reg_link,
+      registration_type: formData.registration_type,
+      reg_link: formData.registration_type === 'gform' ? formData.reg_link : '',
     }
 
     try {
@@ -123,6 +126,21 @@ export default function AdminUI({ eventsData = [] }) {
   return (
     <div className="min-h-screen bg-[#050505] px-4 md:px-8 py-8 md:py-12">
       <div className="max-w-6xl mx-auto">
+
+        {/* ── Back Button ── */}
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase transition-colors duration-200 cursor-pointer"
+          style={{ color: 'rgba(255,244,230,0.5)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#F26A0A' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,244,230,0.5)' }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back
+        </button>
 
         {/* ── Header ── */}
         <div className="mb-10">
@@ -517,40 +535,75 @@ export default function AdminUI({ eventsData = [] }) {
                 </div>
               </div>
 
-              {/* Ticket Price + Reg Link */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold tracking-[0.15em] uppercase mb-1.5" style={{ color: 'rgba(255,244,230,0.35)', fontFamily: "'Space Mono', monospace" }}>
-                    Ticket Price (₹)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    required
-                    value={formData.ticket_price}
-                    onChange={(e) => setFormData({ ...formData, ticket_price: e.target.value })}
-                    placeholder="0 for free"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200"
+              {/* Ticket Price */}
+              <div>
+                <label className="block text-[10px] font-bold tracking-[0.15em] uppercase mb-1.5" style={{ color: 'rgba(255,244,230,0.35)', fontFamily: "'Space Mono', monospace" }}>
+                  Ticket Price (₹)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={formData.ticket_price}
+                  onChange={(e) => setFormData({ ...formData, ticket_price: e.target.value })}
+                  placeholder="0 for free"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200"
+                  style={{
+                    background: '#050505',
+                    border: '1px solid rgba(255,196,107,0.1)',
+                    color: '#FFF7ED',
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = 'rgba(242,106,10,0.4)' }}
+                  onBlur={(e) => { e.target.style.borderColor = 'rgba(255,196,107,0.1)' }}
+                />
+              </div>
+
+              {/* Registration Method */}
+              <div>
+                <label className="block text-[10px] font-bold tracking-[0.15em] uppercase mb-2" style={{ color: 'rgba(255,244,230,0.35)', fontFamily: "'Space Mono', monospace" }}>
+                  Registration Method
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, registration_type: 'native' })}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer text-center"
                     style={{
-                      background: '#050505',
-                      border: '1px solid rgba(255,196,107,0.1)',
-                      color: '#FFF7ED',
+                      background: formData.registration_type === 'native' ? 'rgba(242,106,10,0.15)' : '#050505',
+                      border: `1px solid ${formData.registration_type === 'native' ? 'rgba(242,106,10,0.4)' : 'rgba(255,196,107,0.1)'}`,
+                      color: formData.registration_type === 'native' ? '#F26A0A' : 'rgba(255,244,230,0.35)',
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = 'rgba(242,106,10,0.4)' }}
-                    onBlur={(e) => { e.target.style.borderColor = 'rgba(255,196,107,0.1)' }}
-                  />
+                  >
+                    Native Checkout
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, registration_type: 'gform' })}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-200 cursor-pointer text-center"
+                    style={{
+                      background: formData.registration_type === 'gform' ? 'rgba(242,106,10,0.15)' : '#050505',
+                      border: `1px solid ${formData.registration_type === 'gform' ? 'rgba(242,106,10,0.4)' : 'rgba(255,196,107,0.1)'}`,
+                      color: formData.registration_type === 'gform' ? '#F26A0A' : 'rgba(255,244,230,0.35)',
+                    }}
+                  >
+                    Google Form
+                  </button>
                 </div>
+              </div>
+
+              {/* Google Form URL — conditional */}
+              {formData.registration_type === 'gform' && (
                 <div>
                   <label className="block text-[10px] font-bold tracking-[0.15em] uppercase mb-1.5" style={{ color: 'rgba(255,244,230,0.35)', fontFamily: "'Space Mono', monospace" }}>
-                    Registration Link
+                    Google Form URL
                   </label>
                   <input
                     type="url"
                     required
                     value={formData.reg_link}
                     onChange={(e) => setFormData({ ...formData, reg_link: e.target.value })}
-                    placeholder="https://..."
+                    placeholder="https://forms.gle/..."
                     className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-200"
                     style={{
                       background: '#050505',
@@ -561,7 +614,7 @@ export default function AdminUI({ eventsData = [] }) {
                     onBlur={(e) => { e.target.style.borderColor = 'rgba(255,196,107,0.1)' }}
                   />
                 </div>
-              </div>
+              )}
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-2">

@@ -158,29 +158,6 @@ export default function Hero() {
                 Learn More
               </button>
             </motion.div>
-
-            {/* Social proof strip */}
-            {/* <motion.div {...slideIn(0.65, 'left')} className="flex items-center gap-4 mt-4">
-              <div className="flex -space-x-2">
-                {[0,1,2,3].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold"
-                    style={{
-                      borderColor: '#050505',
-                      background: `linear-gradient(135deg, ${['#F26A0A','#FF8B14','#FFC46B','#E85D04'][i]}, ${['#FF8B14','#FFC46B','#F26A0A','#FF9500'][i]})`,
-                      color: '#fff',
-                    }}
-                  >
-                    {['H','A','P','D'][i]}
-                  </div>
-                ))}
-              </div>
-              <div>
-                <p className="text-xs font-bold" style={{ color: '#FFF7ED' }}>500+ members</p>
-                <p className="text-[10px]" style={{ color: 'rgba(255,244,230,0.35)' }}>already vibing in Chennai</p>
-              </div>
-            </motion.div> */}
           </div>
 
           {/* ── Right Column: Decorative ── */}
