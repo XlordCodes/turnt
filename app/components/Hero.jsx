@@ -84,7 +84,7 @@ export default function Hero() {
                     position: 'relative',
                   }}
                 >
-                  NT&nbsp;
+                  NT<span className="opacity-0">_</span>
                 </span>
               </motion.h1>
             </div>
