@@ -38,12 +38,12 @@ export default function Contact() {
           color: '#FFF7ED',
         }}>
           DON&apos;T BE A<br />
-          <span className="pr-2 md:pr-4 inline-block" style={{
+          <span className="inline-block" style={{
             background: 'linear-gradient(135deg, #F26A0A, #FFC46B)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-          }}>STRANGER</span>
+          }}>STRANGER&nbsp;</span>
         </motion.h2>
 
         <motion.p {...spring(0.2)} className="text-sm md:text-base mb-10 max-w-md mx-auto" style={{ color: 'rgba(255,244,230,0.4)' }}>
